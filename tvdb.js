@@ -15,12 +15,16 @@ module.exports = {
   getShortShows: getShortShows
 };
 
-function getShortList() {
+function getShortList(URLSuffix) {
   var deferred = Q.defer();
+  var url  = URLSuffix
+    ? SHORT_LIST_URL + URLSuffix
+    : SHORT_LIST_URL;
+
   if (_cacheShort) {
     deferred.resolve(_cacheShort);
   } else {
-    GG(SHORT_LIST_URL)
+    GG(url)
       .then(function (response) {
         _cacheShort = response;
         deferred.resolve(response);
@@ -43,12 +47,26 @@ function getTodaysShows() {
   return deferred.promise;
 }
 
+function isAnotherMonth(today, otherDay) {
+  return today.month() !== otherDay.month();
+}
+
+function getURLSuffix(date) {
+  return date.format('M-YYYY');
+}
+
 function getShortShows(when) {
   var deferred = Q.defer();
-  getShortList()
+  var date = moment().add(when, 'days');
+  var urlSuffix;
+
+  if (isAnotherMonth(moment(), date)) {
+    urlSuffix = getURLSuffix(date);
+  }
+
+  getShortList(urlSuffix)
     .then(function (response) {
       $ = cheerio.load(response.body);
-      var date = moment().add(when, 'days');
       var shows = $('#d' + date.format('_D_M_YYYY') + ' .ep');
       var episodes = [];
       shows.each(function(){
@@ -66,7 +84,7 @@ function getShows() {
   getTodaysShows()
     .then(function (response) {
       parseXML(response.body, function (err, result) {
-        var shows = _.get(result, 'rss.channel[0].item', [])
+        var shows = result.rss.channel[0].item
           .map(function (showInfo) {
             return showInfo.title.join();
           });

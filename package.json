@@ -1,5 +1,6 @@
 {
   "name": "todays-shows",
+  "version": "0.9.2",
   "description": "Alfred workflow showing todays TV shows",
   "main": "main.js",
   "author": "Marek Nogiec <omenek@gmail.com>",
